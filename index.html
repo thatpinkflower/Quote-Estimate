@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photography Session Estimator</title>
+    <style>
+        :root {
+            --primary-color: #7d6b58; 
+            --primary-hover: #635343;
+            --bg-color: #fcfbfa;
+            --card-border: #e6e3df;
+            --text-main: #333333;
+            --text-muted: #666666;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+        }
+        .form-container {
+            background: #ffffff;
+            max-width: 600px;
+            width: 100%;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            box-sizing: border-box;
+        }
+        .form-header h2 { margin: 0 0 5px 0; font-size: 1.5rem; }
+        #progress-text { font-size: 0.85rem; color: var(--text-muted); margin: 0 0 10px 0; }
+        .progress-bar-bg { background: #f0ede9; height: 6px; border-radius: 3px; overflow: hidden; margin-bottom: 30px; }
+        #progress-bar-fill { background: var(--primary-color); height: 100%; transition: width 0.3s ease; }
+        .form-step { display: none; }
+        .form-step.active { display: block; }
+        h3 { font-size: 1.3rem; margin-top: 0; margin-bottom: 20px; }
+        .step-desc { color: var(--text-muted); font-size: 0.9rem; margin-top: -15px; margin-bottom: 20px; }
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 8px; }
+        .input-group input { width: 100%; padding: 12px; border: 1px solid var(--card-border); border-radius: 6px; box-sizing: border-box; font-size: 1rem; }
+        .options-grid { display: grid; gap: 15px; margin-bottom: 25px; }
+        .option-card { display: flex; align-items: flex-start; border: 2px solid var(--card-border); border-radius: 8px; padding: 15px; cursor: pointer; transition: all 0.2s ease; }
+        .option-card input[type="radio"], .option-card input[type="checkbox"] { margin-right: 15px; margin-top: 4px; accent-color: var(--primary-color); }
+        .option-card:hover { border-color: var(--primary-color); background-color: #faf9f7; }
+        .option-card input:checked + .card-content, .option-card:has(input:checked) { border-color: var(--primary-color); background-color: #f7f5f2; }
+        .card-content strong { display: block; margin-bottom: 4px; }
+        .card-content span { font-size: 0.85rem; color: var(--text-muted); }
+        .actions { display: flex; gap: 15px; margin-top: 30px; }
+        .btn { padding: 12px 24px; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; font-weight: 600; transition: background 0.2s; }
+        .btn-next, .btn-submit { background-color: var(--primary-color); color: white; margin-left: auto; }
+        .btn-next:hover, .btn-submit:hover { background-color: var(--primary-hover); }
+        .btn-back { background-color: #f0ede9; color: var(--text-main); }
+        .btn-back:hover { background-color: #e3ded9; }
+        .estimate-box { background: #f7f5f2; border: 1px solid var(--card-border); padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 25px; }
+        .price-label { margin: 0; color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .price-amount { font-size: 2.2rem; font-weight: 700; color: var(--primary-color); }
+        .summary-details { border-top: 1px solid var(--card-border); padding-top: 15px; font-size: 0.95rem; }
+        .hidden { display: none !important; }
+        #successMessage { text-align: center; padding: 40px 20px; }
+        .success-icon { font-size: 3rem; color: green; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <div class="form-header">
+        <h2>Build Your Session</h2>
+        <p id="progress-text">Step 1 of 5 (20%)</p>
+        <div class="progress-bar-bg">
+            <div id="progress-bar-fill" style="width: 20%;"></div>
+        </div>
+    </div>
+
+    <form id="estimatorForm" onsubmit="event.preventDefault();">
+        <!-- STEP 1: Contact Info -->
+        <div class="form-step active" data-step="1">
+            <h3>What is your name?</h3>
+            <div class="input-group">
+                <label for="fullName">Full Name *</label>
+                <input type="text" id="fullName" required placeholder="Jane Doe">
+            </div>
+            <div class="input-group">
+                <label for="email">Email Address *</label>
+                <input type="email" id="email" required placeholder="jane@example.com">
+            </div>
+            <div class="actions">
+                <button type="button" class="btn btn-next" onclick="nextStep(1)">Continue</button>
+            </div>
+        </div>
+
+        <!-- STEP 2: Session Selection -->
+        <div class="form-step" data-step="2">
+            <h3>What type of session are you looking for?</h3>
+            <div class="options-grid">
+                <label class="option-card">
+                    <input type="radio" name="serviceTier" value="lifestyle-newborn" data-price="450" checked>
+                    <div class="card-content">
+                        <strong>Lifestyle Newborn</strong>
+                        <span>In-home lifestyle session capturing your growing family ($450)</span>
+                    </div>
+                </label>
+                <label class="option-card">
+                    <input type="radio" name="serviceTier" value="maternity" data-price="350">
+                    <div class="card-content">
+                        <strong>Maternity Portraits</strong>
+                        <span>Outdoor or studio session celebrating your pregnancy ($350)</span>
+                    </div>
+                </label>
+                <label class="option-card">
+                    <input type="radio" name="serviceTier" value="baby-portraits" data-price="300">
+                    <div class="card-content">
+                        <strong>Baby Portraits</strong>
+                        <span>Milestone sessions for sitting up, crawling, or 1st birthday ($300)</span>
+                    </div>
+                </label>
+            </div>
+            <div class="actions">
+                <button type="button" class="btn btn-back" onclick="prevStep(2)">Back</button>
+                <button type="button" class="btn btn-next" onclick="nextStep(2)">Continue</button>
+            </div>
+        </div>
+
+        <!-- STEP 3: Austin Location Check -->
+        <div class="form-step" data-step="3">
+            <h3>Will your session be in the Austin Texas area?</h3>
+            <p class="step-desc">Travel within the main Austin metro region is fully included in your base package.</p>
+            <div class="options-grid">
+                <label class="option-card">
+                    <input type="radio" name="locationArea" value="yes" checked onclick="toggleTravelInput(false)">
+                    <div class="card-content">
+                        <strong>Yes — Austin, Texas Area</strong>
+                    </div>
+                </label>
+                <label class="option-card">
+                    <input type="radio" name="locationArea" value="no" onclick="toggleTravelInput(true)">
+                    <div class="card-content">
+                        <strong>No — Travel Required</strong>
+                    </div>
+                </label>
+            </div>
+            
+            <div class="input-group hidden" id="travelLocationGroup">
+                <label for="travelDetails">Where are you thinking? *</label>
+                <input type="text" id="travelDetails" placeholder="e.g., Dallas, Houston, Out of State">
+            </div>
+
+            <div class="actions">
+                <button type="button" class="btn btn-back" onclick="prevStep(3)">Back</button>
+                <button type="button" class="btn btn-next" onclick="nextStep(3)">Continue</button>
+            </div>
+        </div>
+
+        <!-- STEP 4: Add-ons -->
+        <div class="form-step" data-step="4">
+            <h3>Customize with Add-ons</h3>
+            <p class="step-desc">Select any additional choices you would like to include.</p>
+            <div class="options-grid">
+                <label class="option-card">
+                    <input type="checkbox" name="addons" value="extra-time" data-price="150">
+                    <div class="card-content">
+                        <strong>Additional Hour (+$150)</strong>
+                    </div>
+                </label>
+                <label class="option-card">
+                    <input type="checkbox" name="addons" value="rush-delivery" data-price="100">
+                    <div class="card-content">
+                        <strong>Rush Editing Turnaround (+$100)</strong>
+                    </div>
+                </label>
+            </div>
+            <div class="actions">
+                <button type="button" class="btn btn-back" onclick="prevStep(4)">Back</button>
+                <button type="button" class="btn btn-next" onclick="calculateEstimate()">Show My Recommendation</button>
+            </div>
+        </div>
+
+        <!-- STEP 5: Final Breakdown -->
+        <div class="form-step" data-step="5">
+            <div id="estimateResult">
+                <h3>Your Custom Estimate</h3>
+                <div class="estimate-box">
+                    <p class="price-label">Estimated Total</p>
+                    <span id="totalPrice" class="price-amount">$0</span>
+                </div>
+                <div class="summary-details">
+                    <h4>Inquiry Details</h4>
