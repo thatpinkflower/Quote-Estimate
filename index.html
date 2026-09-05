@@ -6,7 +6,7 @@
     <title>Photography Session Estimator</title>
     <style>
         :root {
-            --primary-color: #7d6b58; 
+            --primary-color: #7d6b58;
             --primary-hover: #635343;
             --bg-color: #fcfbfa;
             --card-border: #e6e3df;
@@ -142,7 +142,7 @@
                     </div>
                 </label>
             </div>
-            
+
             <div class="input-group hidden" id="travelLocationGroup">
                 <label for="travelDetails">Where are you thinking? *</label>
                 <input type="text" id="travelDetails" placeholder="e.g., Dallas, Houston, Out of State">
@@ -188,3 +188,165 @@
                 </div>
                 <div class="summary-details">
                     <h4>Inquiry Details</h4>
+                    <p><strong>Name:</strong> <span id="summaryName"></span></p>
+                    <p><strong>Email:</strong> <span id="summaryEmail"></span></p>
+                    <p><strong>Session:</strong> <span id="summaryService"></span></p>
+                    <p><strong>Location:</strong> <span id="summaryLocation"></span></p>
+                    <p><strong>Add-ons:</strong> <span id="summaryAddons"></span></p>
+                </div>
+                <div class="actions">
+                    <button type="button" class="btn btn-back" onclick="prevStep(5)">Back</button>
+                    <button type="button" class="btn btn-submit" onclick="submitInquiry()">Send My Session Vision</button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div id="successMessage" class="hidden" role="status" aria-live="polite">
+        <div class="success-icon" aria-hidden="true">&#10003;</div>
+        <h3>Thank you!</h3>
+        <p>Your session vision has been received. We will be in touch soon.</p>
+    </div>
+</div>
+
+<script>
+    const TOTAL_STEPS = 5;
+
+    function getStep(stepNumber) {
+        return document.querySelector(`.form-step[data-step="${stepNumber}"]`);
+    }
+
+    function showStep(stepNumber) {
+        const nextStepElement = getStep(stepNumber);
+
+        if (!nextStepElement) {
+            return;
+        }
+
+        document.querySelectorAll('.form-step').forEach((step) => {
+            step.classList.remove('active');
+        });
+        nextStepElement.classList.add('active');
+
+        const percentage = Math.round((stepNumber / TOTAL_STEPS) * 100);
+        document.getElementById('progress-text').textContent =
+            `Step ${stepNumber} of ${TOTAL_STEPS} (${percentage}%)`;
+        document.getElementById('progress-bar-fill').style.width = `${percentage}%`;
+    }
+
+    function validateStep(stepNumber) {
+        const step = getStep(stepNumber);
+
+        if (!step) {
+            return false;
+        }
+
+        if (stepNumber === 1) {
+            const fullName = document.getElementById('fullName');
+            fullName.setCustomValidity(
+                fullName.value.trim() ? '' : 'Please enter your full name.'
+            );
+        }
+
+        const invalidField = Array.from(step.querySelectorAll('input, select, textarea'))
+            .find((field) => !field.checkValidity());
+
+        if (invalidField) {
+            invalidField.reportValidity();
+            return false;
+        }
+
+        return true;
+    }
+
+    function nextStep(currentStep) {
+        if (validateStep(currentStep)) {
+            showStep(currentStep + 1);
+        }
+    }
+
+    function prevStep(currentStep) {
+        showStep(currentStep - 1);
+    }
+
+    function toggleTravelInput(show) {
+        const travelGroup = document.getElementById('travelLocationGroup');
+        const travelDetails = document.getElementById('travelDetails');
+
+        travelGroup.classList.toggle('hidden', !show);
+        travelDetails.required = show;
+
+        if (!show) {
+            travelDetails.setCustomValidity('');
+        }
+    }
+
+    function selectedOptionLabel(input) {
+        const label = input.closest('.option-card');
+        const title = label ? label.querySelector('strong') : null;
+        return title ? title.textContent.trim() : input.value;
+    }
+
+    function calculateEstimate() {
+        if (!validateStep(4)) {
+            return;
+        }
+
+        const selectedService = document.querySelector('input[name="serviceTier"]:checked');
+        const selectedLocation = document.querySelector('input[name="locationArea"]:checked');
+        const selectedAddons = Array.from(
+            document.querySelectorAll('input[name="addons"]:checked')
+        );
+
+        const servicePrice = Number(selectedService.dataset.price) || 0;
+        const addonsPrice = selectedAddons.reduce(
+            (total, addon) => total + (Number(addon.dataset.price) || 0),
+            0
+        );
+        const locationText = selectedLocation.value === 'yes'
+            ? 'Austin, Texas Area'
+            : document.getElementById('travelDetails').value.trim();
+
+        document.getElementById('totalPrice').textContent =
+            new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                maximumFractionDigits: 0
+            }).format(servicePrice + addonsPrice);
+        document.getElementById('summaryName').textContent =
+            document.getElementById('fullName').value.trim();
+        document.getElementById('summaryEmail').textContent =
+            document.getElementById('email').value.trim();
+        document.getElementById('summaryService').textContent =
+            selectedOptionLabel(selectedService);
+        document.getElementById('summaryLocation').textContent = locationText;
+        document.getElementById('summaryAddons').textContent = selectedAddons.length
+            ? selectedAddons.map(selectedOptionLabel).join(', ')
+            : 'None';
+
+        showStep(5);
+    }
+
+    function submitInquiry() {
+        document.getElementById('estimatorForm').classList.add('hidden');
+        document.querySelector('.form-header').classList.add('hidden');
+        document.getElementById('successMessage').classList.remove('hidden');
+    }
+
+    document.getElementById('estimatorForm').addEventListener('submit', (event) => {
+        event.preventDefault();
+        const activeStep = Number(
+            document.querySelector('.form-step.active').dataset.step
+        );
+
+        if (activeStep < 4) {
+            nextStep(activeStep);
+        } else if (activeStep === 4) {
+            calculateEstimate();
+        } else {
+            submitInquiry();
+        }
+    });
+</script>
+</body>
+</html>
